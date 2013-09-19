@@ -1,6 +1,8 @@
 require 'net/http'
 
 class WorkOrder
+  attr_reader :base_uri
+  
   def initialize(attributes, base_uri)
     @attributes = attributes
     @base_uri = base_uri
@@ -14,42 +16,55 @@ class WorkOrder
     @attributes['input']
   end
   
+  def started?
+    @started == true
+  end
+  
   def start
-    response = post @attributes['start']
+    return if @started
     
-    if response.status == 409
-      raise WorkStpopped
-    else
-      @started = true
-    end
+    response = post(@attributes['start'])
+    @started = (200...299).include?(response.code.to_i)
   end
   
   def status
-    response = get @attibutes['status']
+    response = get(@attributes['status'])
     if response.body.status == 'ok'
-      
+      true
     else
-      raise WorkStopped
+      raise WorkStopped, response.body.inspect
     end
   end
   
-  def complete(result)
-    post @attibutes['complete'], result
+  def complete(result = nil)
+    check_started
+    
+    response = post(@attributes['complete'], result || {})
+    fail unless (200...299).include?(response.code.to_i)
   end
   
   def fail
-    post @attributes['fail']
+    check_started
+    
+    post(@attributes['fail'])
   end
   
   private
+  def check_started
+    raise 'Work not started. Call #start first.' unless started?
+  end
   
   def post(path, body = nil)
-    Net::HTTP.post(base_uri, path)
+    uri = URI.join(base_uri, path)
+    
+    Net::HTTP.post_form(uri, body ? {'body' => body} : {})
   end
   
   def get(path)
-    Net::HTTP.get(base_uri, path)
+    uri = URI.join(base_uri, path)
+    Net::HTTP.get(uri)
   end
+
+  class WorkStopped < StandardError; end
 end
 
-class WorkStopped < StandardError; end

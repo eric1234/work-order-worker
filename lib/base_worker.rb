@@ -13,11 +13,12 @@ class BaseWorker
   
   def work(work_order)
     begin
-      work_order.start
-      work_implementation(work_order)
-    rescue WorkOrder::Stopped => e
+      work_implementation(work_order) if work_order.start
+    rescue StandardError => e
+      work_order.fail
+
       puts e.message
-    end
+    end 
   end
   
   def work_implementation(work_order)
