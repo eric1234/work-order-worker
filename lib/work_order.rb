@@ -6,6 +6,7 @@ class WorkOrder
   def initialize(attributes, base_uri)
     @attributes = attributes
     @base_uri = base_uri
+    reset
   end
   
   def type
@@ -17,22 +18,45 @@ class WorkOrder
   end
   
   def started?
-    @started == true
+    @started
+  end
+  
+  def completed?
+    @completed
+  end
+  
+  def cancelled?
+    @cancelled
+  end
+  
+  def failed?
+    @failed
   end
   
   def start
-    return if @started
+    if @started     
+      puts 'Already started.'
+      return
+    end
     
     response = post(@attributes['start'])
+    puts response.body.inspect if response.body
+    
     @started = (200...299).include?(response.code.to_i)
   end
   
-  def status
+  def status(options = {})
     response = get(@attributes['status'])
-    if response.body.status == 'ok'
-      true
+    state = response['status']['state']
+    
+    if state == 'ok'
+      unless options.empty?
+        
+      end
+      state
     else
-      raise WorkStopped, response.body.inspect
+      @cancelled = true
+      raise WorkStopped, response.inspect
     end
   end
   
@@ -40,13 +64,14 @@ class WorkOrder
     check_started
     
     response = post(@attributes['complete'], result || {})
-    fail unless (200...299).include?(response.code.to_i)
+    @completed = (200...299).include?(response.code.to_i).tap { |success| fail unless success }
   end
   
-  def fail
+  def fail(reason = nil)
     check_started
+    @failed = true
     
-    post(@attributes['fail'])
+    post(@attributes['fail'], reason || {}) rescue false
   end
   
   private
@@ -56,13 +81,19 @@ class WorkOrder
   
   def post(path, body = nil)
     uri = URI.join(base_uri, path)
-    
-    Net::HTTP.post_form(uri, body ? {'body' => body} : {})
+    Net::HTTP.post_form(uri, {}.merge(body || {}))
   end
   
   def get(path)
     uri = URI.join(base_uri, path)
     Net::HTTP.get(uri)
+  end
+  
+  def reset
+    @started = false
+    @completed = false
+    @failed = false
+    @cancelled = false
   end
 
   class WorkStopped < StandardError; end
