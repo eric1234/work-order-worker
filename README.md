@@ -21,11 +21,9 @@ Below is an example worker that will translate text from one language to another
           end
         
           def work_implementation job
-            begin
-              url = "http://translate.google.com/translate_a/t?client=t&text=#{CGI::escape job.input['text']}&hl=#{job.input['to']}&sl=#{job.input['from']}&tl=#{job.input['to']}&ie=UTF-8&oe=UTF-8&multires=1&otf=1&pc=1&trs=1&ssel=3&tsel=6&sc=1"
-              translated = eval(RestClient.get(url).body.gsub(/,{2,}/, ',')).first.first.first
-              job.complete translated
-            end
+            url = "http://translate.google.com/translate_a/t?client=t&text=#{CGI::escape job.input['text']}&hl=#{job.input['to']}&sl=#{job.input['from']}&tl=#{job.input['to']}&ie=UTF-8&oe=UTF-8&multires=1&otf=1&pc=1&trs=1&ssel=3&tsel=6&sc=1"
+            translated = eval(RestClient.get(url).body.gsub(/,{2,}/, ',')).first.first.first
+            job.complete translated
           end
         end
 
