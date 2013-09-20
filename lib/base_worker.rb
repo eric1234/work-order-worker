@@ -14,10 +14,9 @@ class BaseWorker
   def work(work_order)
     begin
       work_implementation(work_order) if work_order.start
-    rescue StandardError => e
+    rescue StandardError
       work_order.fail
-
-      puts e.message
+      raise
     end 
   end
   

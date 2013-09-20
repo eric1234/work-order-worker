@@ -17,11 +17,11 @@ module Loop
       site[queue_uri.path].get accept: :json do |response, request, result|
         if result.code == '200'
           jobs = JSON.parse(response)['collection']['items']
-          for job in jobs
+          jobs.each do |job|
             site[job['href']].get accept: :json do |response, request, result|
-              if result.code == '200'
+              if result.code == '200' && result.header['Content-type'] == WorkOrder.content_type
                 job = WorkOrder.new JSON.parse(response), base_uri
-                work job if job.type == desired_task
+                work job if job.type == desired_task 
               end
             end
           end

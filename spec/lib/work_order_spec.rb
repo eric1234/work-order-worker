@@ -63,27 +63,34 @@ describe WorkOrder do
   end
   
   describe '#status' do
-    def stub_get_status(response)
+    def stub_get_status(response, content_type = nil)
+      response[:headers] = {'Content-Type' => content_type ? content_type : 'application/status+json' }
       stub_request(:get, 'http://status-server.example.com/203009179793/status').to_return(response)
     end
 
-    def stub_post_status(response, body)
-      stub_request(:post, 'http://status-server.example.com/203009179793/status').with(body).to_return(response)
+    before do
+      work_order.stub(:started?).and_return(true)
+    end
+
+    def stub_put_status(response, body, content_type = nil)
+      headers = {'Content-Type' => content_type ? content_type : 'application/status+json'}
+
+      stub_request(:put, 'http://status-server.example.com/203009179793/status').with(body.merge(headers: headers)).to_return(response)
     end
     
     it 'returns the state of the status if ok' do
       stub_get_status(status: 200, body: status_hash)
-      status = status_hash.dup
-      status['status']['progress'] = 'progress'
-      status['status']['message'] = 'message'
-      
-      stub_post_status({status: 200}, {body: status})
-      
-      work_order.status({progress: 'progress', message: 'message'}).should == status_hash['status']['state']
     end
     
     it 'updates the status when given progress or a message' do
       stub_get_status(status: 200, body: status_hash)
+      status = status_hash.dup
+      status['status']['progress'] = 'progress'
+      status['status']['message'] = 'message'
+
+      stub_put_status({status: 204}, {body: status.to_json})
+
+      work_order.status({progress: 'progress', message: 'message'}).state.should == status_hash['status']['state']
     end
     
     it 'raises an error if the status is cancelled' do
@@ -91,7 +98,7 @@ describe WorkOrder do
       status['status']['state'] = 'cancelled'
       stub_get_status(status: 200, body: status)
       
-      expect { work_order.status }.to raise_error(WorkOrder::WorkStopped, status.inspect)
+      expect { work_order.status }.to raise_error(WorkOrder::WorkStopped)
     end
   end
 

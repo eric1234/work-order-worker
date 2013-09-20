@@ -8,6 +8,8 @@ Gem::Specification.new do |s|
   s.authors = ["Eric Anderson", "Mark W. Foster"]
   s.has_rdoc = false
 
-  s.files = %w( README.md Rakefile LICENSE )
+  s.files = %w( README.md )
   s.files += Dir.glob("lib/**/*")
+  s.add_dependency('json')
+  s.add_dependency('rest-client')
 end
