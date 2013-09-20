@@ -46,7 +46,7 @@ class WorkOrder
       response = post(start_uri)
    
       @started = (200...299).include?(response.code.to_i).tap do
-        if response.headers['Content-Type'] == self.class.content_type
+        if response.body && response.headers['Content-Type'] == self.class.content_type
           @attributes = JSON.parse(response.body)
           puts "Work order updated to: #{@attributes.inspect}"
         end
