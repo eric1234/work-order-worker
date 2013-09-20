@@ -1,8 +1,8 @@
 # Overview
 
-Developed for RestFEST 2013 Hackfest. A base class to make it quick and easy to write workers.
-The [work server](https://github.com/RESTFest/2013-greenville/wiki/Work-order) provides a queue of jobs.
-A worker will scan those jobs for ones it can handle, process the job and post the result.
+Developed for [RestFEST 2013 Hackfest](https://github.com/RESTFest/2013-greenville/wiki/Hack%20Day). A base class to 
+make it quick and easy to write workers. The [work server](https://github.com/RESTFest/2013-greenville/wiki/Work-order) 
+provides a queue of jobs. A worker will scan those jobs for ones it can handle, process the job and post the result.
 
 This base class abstracts all the server interaction so the worker can just concern itself with
 actually doing the job.
